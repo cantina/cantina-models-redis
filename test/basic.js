@@ -26,7 +26,13 @@ describe('basic', function (){
     });
 
     it('can create a collection', function () {
-      app.createRedisCollection('people');
+      app.createRedisCollection('people', {
+        indexes: [
+            {email: 1, unique: true},
+            {first: 1},
+            {last: 1}
+          ]
+      });
       assert(app.collections.people);
     });
 
@@ -65,8 +71,28 @@ describe('basic', function (){
       });
 
     });
+    it('can enforce a unique index', function (done) {
+      app.collections.people.create({
+        email: 'cpsubrian@gmail.com'
+      }, function (err) {
+        assert(err);
+        assert(err.toString().match(/duplicate key for unique index email/));
+        done();
+      });
+    });
     it('can load a model', function (done) {
       app.collections.people.load(model.id, function (err, loadModel) {
+        assert.ifError(err);
+        Object.keys(loadModel).forEach(function (prop) {
+          if (prop === '_id') assert(loadModel[prop].equals(model[prop]));
+          else if (prop === 'created' || prop === 'updated') assert.equal(loadModel[prop].toString(), model[prop].toString());
+          else assert.equal(loadModel[prop], model[prop]);
+        });
+        done();
+      });
+    });
+    it ('can load a model by an indexed property', function (done) {
+      app.collections.people.load({email: model.email}, function (err, loadModel) {
         assert.ifError(err);
         Object.keys(loadModel).forEach(function (prop) {
           if (prop === '_id') assert(loadModel[prop].equals(model[prop]));
@@ -82,6 +108,36 @@ describe('basic', function (){
         assert(Array.isArray(list));
         assert.equal(list.length, 1);
         assert.equal(list[0].id, model.id);
+        done();
+      });
+    });
+    it ('can list models by indexed property', function (done) {
+      app.collections.people.create({
+        first: 'Midnight',
+        last: 'Runner',
+        email: 'runner@gmail.com'
+      }, function (err) {
+        assert.ifError(err);
+        app.collections.people.create({
+          first: 'Sunlight',
+          last: 'Runner',
+          email: 'sunrunner@gmail.com'
+        }, function (err) {
+          assert.ifError(err);
+          app.collections.people.list({first: 'Midnight'}, {load: true}, function (err, list) {
+            assert.ifError(err);
+            assert(Array.isArray(list));
+            assert.equal(list.length, 2);
+            done();
+          });
+        });
+      });
+    });
+    it('can list models by multiple indexed properties', function (done) {
+      app.collections.people.list({first: 'Midnight', last: 'Runner'}, {load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 1);
         done();
       });
     });
@@ -129,7 +185,7 @@ describe('basic', function (){
         model.saveHookRan = true;
         next();
       });
-      app.collections.people.create({first: 'Danny'}, function (err, model) {
+      app.collections.people.create({first: 'Danny', email: 'danny@test.com'}, function (err, model) {
         assert.ifError(err);
         assert.equal(model.first, 'Danny');
         assert(model.saveHookRan);
@@ -143,7 +199,7 @@ describe('basic', function (){
         model.saveHookRan = true;
         next();
       });
-      app.collections.people.create({first: 'Danny'}, function (err, model) {
+      app.collections.people.create({first: 'Danny', email: 'danny2@test.com'}, function (err, model) {
         assert.ifError(err);
         assert.equal(model.first, 'Danny');
         assert(model.saveHookRan);

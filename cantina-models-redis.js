@@ -1,5 +1,5 @@
 var app = require('cantina')
-  , redisStore = require('modeler-redis');
+  , redisStore = require('./lib/redis-store');
 
 require('cantina-models');
 require('cantina-redis');
