@@ -30,7 +30,8 @@ describe('basic', function (){
         indexes: [
             {email: 1, unique: true},
             {first: 1},
-            {last: 1}
+            {last: 1},
+            {age: 1, sort: true}
           ]
       });
       assert(app.collections.people);
@@ -40,7 +41,8 @@ describe('basic', function (){
       model = app.collections.people.create({
         first: 'Brian',
         last: 'Link',
-        email: 'cpsubrian@gmail.com'
+        email: 'cpsubrian@gmail.com',
+        age: 20
       });
       assert(model);
       assert(model.id);
@@ -115,13 +117,15 @@ describe('basic', function (){
       app.collections.people.create({
         first: 'Midnight',
         last: 'Runner',
-        email: 'runner@gmail.com'
+        email: 'runner@gmail.com',
+        age: 23
       }, function (err) {
         assert.ifError(err);
         app.collections.people.create({
           first: 'Sunlight',
           last: 'Runner',
-          email: 'sunrunner@gmail.com'
+          email: 'sunrunner@gmail.com',
+          age: 25
         }, function (err) {
           assert.ifError(err);
           app.collections.people.list({first: 'Midnight'}, {load: true}, function (err, list) {
@@ -138,6 +142,35 @@ describe('basic', function (){
         assert.ifError(err);
         assert(Array.isArray(list));
         assert.equal(list.length, 1);
+        done();
+      });
+    });
+    it('can list sorted models', function (done) {
+      app.collections.people.list({sort: 'age', load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 3);
+        assert(list[0].age < list[1].age);
+        assert(list[1].age < list[2].age);
+        done();
+      });
+    });
+    it('can list reverse sorted models', function (done) {
+      app.collections.people.list({sort: 'age', reverse: true, load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 3);
+        assert(list[0].age > list[1].age);
+        assert(list[1].age > list[2].age);
+        done();
+      });
+    });
+    it('can list models by indexed property and sort', function (done) {
+      app.collections.people.list({first: 'Midnight'}, {sort: 'age', load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 2);
+        assert(list[0].age < list[1].age);
         done();
       });
     });
