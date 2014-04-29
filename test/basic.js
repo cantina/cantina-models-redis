@@ -66,9 +66,12 @@ describe('basic', function (){
         assert.equal(saveModel.last, 'Rider');
         assert.equal(saveModel.email, email);
         assert.equal(saveModel.rev, 2);
-        done();
+        app.collections.people.list({first: 'Brian'}, {load: true}, function (err, models) {
+          assert.ifError(err);
+          assert.equal(models.length, 0);
+          done();
+        });
       });
-
     });
     it('can enforce a unique index', function (done) {
       app.collections.people.create({
