@@ -26,15 +26,12 @@ describe('basic', function (){
     });
 
     it('can create a collection', function () {
-      app.createRedisCollection('people', {
-        indexes: [
-            {email: 1, unique: true},
-            {first: 1},
-            {last: 1},
-            {age: 1, sort: true}
-          ]
-      });
+      app.createRedisCollection('people');
       assert(app.collections.people);
+      app.collections.people.createUniqueIndex('email');
+      app.collections.people.createQueryIndex('first');
+      app.collections.people.createQueryIndex('last');
+      app.collections.people.createSortedIndex('age');
     });
 
     it('can create a model', function () {
