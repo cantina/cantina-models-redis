@@ -26,7 +26,9 @@ describe('basic', function (){
     });
 
     it('can create a collection', function () {
-      app.createRedisCollection('people');
+      app.createRedisCollection('people', {
+        privateProperties: ['auth']
+      });
       assert(app.collections.people);
       app.collections.people.createUniqueIndex('email');
       app.collections.people.createQueryIndex('first');
@@ -39,6 +41,7 @@ describe('basic', function (){
         first: 'Brian',
         last: 'Link',
         email: 'cpsubrian@gmail.com',
+        auth: 'ABC',
         age: 20
       });
       assert(model);
@@ -102,6 +105,28 @@ describe('basic', function (){
           else assert.equal(loadModel[prop], model[prop]);
         });
         done();
+      });
+    });
+    it('does not return private properties', function (done) {
+      app.collections.people.load(model.id, function (err, loadModel) {
+        assert.ifError(err);
+        assert(!loadModel.auth);
+        done();
+      });
+    });
+    it('can save a partial model without erasing private properties', function (done) {
+      app.collections.people.load(model.id, function (err, loadModel) {
+        assert.ifError(err);
+        assert(!loadModel.auth);
+        loadModel.age = 19;
+        app.collections.people.save(loadModel, function (err) {
+          assert.ifError(err);
+          app.collections.people.load(model.id, {raw: true}, function (err, loadModel) {
+            assert.ifError(err);
+            assert.equal(loadModel.auth, 'ABC');
+            done();
+          });
+        });
       });
     });
     it('can list models', function (done) {
