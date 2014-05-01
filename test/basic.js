@@ -34,6 +34,7 @@ describe('basic', function (){
       app.collections.people.createQueryIndex('first');
       app.collections.people.createQueryIndex('last');
       app.collections.people.createSortedIndex('age');
+      app.collections.people.createSortedIndex('lorem');
     });
 
     it('can create a model', function () {
@@ -42,7 +43,8 @@ describe('basic', function (){
         last: 'Link',
         email: 'cpsubrian@gmail.com',
         auth: 'ABC',
-        age: 20
+        age: 20,
+        lorem: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'
       });
       assert(model);
       assert(model.id);
@@ -143,14 +145,16 @@ describe('basic', function (){
         first: 'Midnight',
         last: 'Runner',
         email: 'runner@gmail.com',
-        age: 23
+        age: 23,
+        lorem: 'Lorem opsum dolor sit amet, consectetur adipiscing elit'
       }, function (err) {
         assert.ifError(err);
         app.collections.people.create({
           first: 'Sunlight',
           last: 'Runner',
           email: 'sunrunner@gmail.com',
-          age: 25
+          age: 25,
+          lorem: 'Lorem opsum dolor sit gamet, consectetur adipiscing elit'
         }, function (err) {
           assert.ifError(err);
           app.collections.people.list({first: 'Midnight'}, {load: true}, function (err, list) {
@@ -187,6 +191,16 @@ describe('basic', function (){
         assert.equal(list.length, 3);
         assert(list[0].age > list[1].age);
         assert(list[1].age > list[2].age);
+        done();
+      });
+    });
+    it('can list sorted models by alpha property', function (done) {
+      app.collections.people.list({sort: 'lorem', load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 3);
+        assert(list[0].lorem < list[1].lorem);
+        assert(list[1].lorem < list[2].lorem);
         done();
       });
     });
