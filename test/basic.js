@@ -26,15 +26,25 @@ describe('basic', function (){
     });
 
     it('can create a collection', function () {
-      app.createRedisCollection('people');
+      app.createRedisCollection('people', {
+        privateProperties: ['auth']
+      });
       assert(app.collections.people);
+      app.collections.people.createUniqueIndex('email');
+      app.collections.people.createQueryIndex('first');
+      app.collections.people.createQueryIndex('last');
+      app.collections.people.createSortedIndex('age');
+      app.collections.people.createSortedIndex('lorem');
     });
 
     it('can create a model', function () {
       model = app.collections.people.create({
         first: 'Brian',
         last: 'Link',
-        email: 'cpsubrian@gmail.com'
+        email: 'cpsubrian@gmail.com',
+        auth: 'ABC',
+        age: 20,
+        lorem: 'Lorem ipsum dolor sit amet, consectetur adipiscing elit'
       });
       assert(model);
       assert(model.id);
@@ -61,9 +71,21 @@ describe('basic', function (){
         assert.equal(saveModel.last, 'Rider');
         assert.equal(saveModel.email, email);
         assert.equal(saveModel.rev, 2);
+        app.collections.people.list({first: 'Brian'}, {load: true}, function (err, models) {
+          assert.ifError(err);
+          assert.equal(models.length, 0);
+          done();
+        });
+      });
+    });
+    it('can enforce a unique index', function (done) {
+      app.collections.people.create({
+        email: 'cpsubrian@gmail.com'
+      }, function (err) {
+        assert(err);
+        assert(err.toString().match(/duplicate key for unique index email/));
         done();
       });
-
     });
     it('can load a model', function (done) {
       app.collections.people.load(model.id, function (err, loadModel) {
@@ -76,12 +98,118 @@ describe('basic', function (){
         done();
       });
     });
+    it ('can load a model by an indexed property', function (done) {
+      app.collections.people.load({email: model.email}, function (err, loadModel) {
+        assert.ifError(err);
+        Object.keys(loadModel).forEach(function (prop) {
+          if (prop === '_id') assert(loadModel[prop].equals(model[prop]));
+          else if (prop === 'created' || prop === 'updated') assert.equal(loadModel[prop].toString(), model[prop].toString());
+          else assert.equal(loadModel[prop], model[prop]);
+        });
+        done();
+      });
+    });
+    it('does not return private properties', function (done) {
+      app.collections.people.load(model.id, function (err, loadModel) {
+        assert.ifError(err);
+        assert(!loadModel.auth);
+        done();
+      });
+    });
+    it('can save a partial model without erasing private properties', function (done) {
+      app.collections.people.load(model.id, function (err, loadModel) {
+        assert.ifError(err);
+        assert(!loadModel.auth);
+        loadModel.age = 19;
+        app.collections.people.save(loadModel, function (err) {
+          assert.ifError(err);
+          app.collections.people.load(model.id, {raw: true}, function (err, loadModel) {
+            assert.ifError(err);
+            assert.equal(loadModel.auth, 'ABC');
+            done();
+          });
+        });
+      });
+    });
     it('can list models', function (done) {
       app.collections.people.list({load: true}, function (err, list) {
         assert.ifError(err);
         assert(Array.isArray(list));
         assert.equal(list.length, 1);
         assert.equal(list[0].id, model.id);
+        done();
+      });
+    });
+    it ('can list models by indexed property', function (done) {
+      app.collections.people.create({
+        first: 'Midnight',
+        last: 'Runner',
+        email: 'runner@gmail.com',
+        age: 23,
+        lorem: 'Lorem opsum dolor sit amet, consectetur adipiscing elit'
+      }, function (err) {
+        assert.ifError(err);
+        app.collections.people.create({
+          first: 'Sunlight',
+          last: 'Runner',
+          email: 'sunrunner@gmail.com',
+          age: 25,
+          lorem: 'Lorem opsum dolor sit gamet, consectetur adipiscing elit'
+        }, function (err) {
+          assert.ifError(err);
+          app.collections.people.list({first: 'Midnight'}, {load: true}, function (err, list) {
+            assert.ifError(err);
+            assert(Array.isArray(list));
+            assert.equal(list.length, 2);
+            done();
+          });
+        });
+      });
+    });
+    it('can list models by multiple indexed properties', function (done) {
+      app.collections.people.list({first: 'Midnight', last: 'Runner'}, {load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 1);
+        done();
+      });
+    });
+    it('can list sorted models', function (done) {
+      app.collections.people.list({sort: 'age', load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 3);
+        assert(list[0].age < list[1].age);
+        assert(list[1].age < list[2].age);
+        done();
+      });
+    });
+    it('can list reverse sorted models', function (done) {
+      app.collections.people.list({sort: 'age', reverse: true, load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 3);
+        assert(list[0].age > list[1].age);
+        assert(list[1].age > list[2].age);
+        done();
+      });
+    });
+    it('can list sorted models by alpha property', function (done) {
+      app.collections.people.list({sort: 'lorem', load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 3);
+        assert(list[0].lorem < list[1].lorem);
+        assert(list[1].lorem < list[2].lorem);
+        done();
+      });
+    });
+    it('can list models by indexed property and sort', function (done) {
+      app.collections.people.list({first: 'Midnight'}, {sort: 'age', load: true}, function (err, list) {
+        assert.ifError(err);
+        assert(Array.isArray(list));
+        assert.equal(list.length, 2);
+        assert(list[0].age < list[1].age);
         done();
       });
     });
@@ -129,7 +257,7 @@ describe('basic', function (){
         model.saveHookRan = true;
         next();
       });
-      app.collections.people.create({first: 'Danny'}, function (err, model) {
+      app.collections.people.create({first: 'Danny', email: 'danny@test.com'}, function (err, model) {
         assert.ifError(err);
         assert.equal(model.first, 'Danny');
         assert(model.saveHookRan);
@@ -143,7 +271,7 @@ describe('basic', function (){
         model.saveHookRan = true;
         next();
       });
-      app.collections.people.create({first: 'Danny'}, function (err, model) {
+      app.collections.people.create({first: 'Danny', email: 'danny2@test.com'}, function (err, model) {
         assert.ifError(err);
         assert.equal(model.first, 'Danny');
         assert(model.saveHookRan);
