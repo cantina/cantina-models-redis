@@ -1,8 +1,10 @@
 {
   "name": "cantina-models-redis",
-  "version": "0.0.0",
   "description": "Redis store for cantina-models",
-  "private": true,
+  "version": "4.0.0-dev",
+  "publishConfig": {
+    "registry": "https://npm-registry.terraeclipse.com"
+  },
   "main": "cantina-models-redis.js",
   "scripts": {
     "test": "make test"
@@ -20,11 +22,16 @@
   "dependencies": {
     "modeler-redis": "~0.3.2"
   },
+  "peerDependencies": {
+    "cantina": "~4.0.0",
+    "cantina-models": "~4.0.0",
+    "cantina-redis": "~4.0.0"
+  },
   "devDependencies": {
     "mocha": "^1.18.2",
     "idgen": "~1.3.0",
-    "cantina": "cantina/cantina.git#3.x",
-    "cantina-models": "cantina/cantina-models.git#3.1.x",
-    "cantina-redis": "cantina/cantina-redis.git#3.x"
+    "cantina": "~4.0.0",
+    "cantina-models": "~4.0.0",
+    "cantina-redis": "~4.0.0"
   }
 }
