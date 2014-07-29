@@ -1,7 +1,7 @@
 {
   "name": "cantina-models-redis",
   "description": "Redis store for cantina-models",
-  "version": "4.0.0-dev",
+  "version": "4.1.0",
   "publishConfig": {
     "registry": "https://npm-registry.terraeclipse.com"
   },
