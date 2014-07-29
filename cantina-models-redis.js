@@ -1,7 +1,8 @@
-var app = require('cantina')
-  , redisStore = require('modeler-redis');
+var redisStore = require('modeler-redis');
 
-require('cantina-models');
-require('cantina-redis');
+module.exports = function (app) {
+  app.require('cantina-models');
+  app.require('cantina-redis');
 
-app.createCollectionFactory('redis', redisStore, {client: app.redis, prefix: app.redisKey('models') + ':'});
+  app.createCollectionFactory('redis', redisStore, {client: app.redis, prefix: app.redisKey('models') + ':'});
+};

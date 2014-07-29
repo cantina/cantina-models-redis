@@ -4,10 +4,10 @@ describe('basic', function (){
     , model;
 
   before(function (done) {
-    app = require('cantina');
+    app = require('cantina').createApp();
     app.boot(function(err) {
       app.conf.set('redis:prefix', 'cantina-models-redis-test-' + idgen());
-      require('../');
+      app.require('../');
       if (err) return done(err);
       app.start(done);
     });
