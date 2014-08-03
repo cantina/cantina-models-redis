@@ -1,7 +1,7 @@
 {
   "name": "cantina-models-redis",
   "description": "Redis store for cantina-models",
-  "version": "4.1.0",
+  "version": "4.1.1",
   "main": "cantina-models-redis.js",
   "scripts": {
     "test": "make test"
