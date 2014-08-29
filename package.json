@@ -25,15 +25,15 @@
     "modeler-redis": "~0.3.2"
   },
   "peerDependencies": {
-    "cantina": "~4.1.0",
-    "cantina-models": "~4.1.0",
-    "cantina-redis": "~4.1.0"
+    "cantina": "^4.1.0",
+    "cantina-models": "^4.1.0",
+    "cantina-redis": "^4.1.0"
   },
   "devDependencies": {
     "mocha": "^1.18.2",
     "idgen": "~1.3.0",
-    "cantina": "~4.1.0",
-    "cantina-models": "~4.1.0",
-    "cantina-redis": "~4.1.0"
+    "cantina": "^4.1.0",
+    "cantina-models": "^4.1.0",
+    "cantina-redis": "^4.1.0"
   }
 }
